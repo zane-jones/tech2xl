@@ -73,6 +73,12 @@ Interfaces sheet:
 - Hardware: interface hardware
 - Mac address
 - Encapsulation: ARPA, HDLC, Frame-relay, etc.
+- Input queue
+- Output queue
+- Input rate bps
+- Input rate pps
+- Output rate bps
+- Output rate pps
 - Switchport mode: access or trunk for ethernet interfaces
 - Access vlan: vlan for ethernet access ports
 - Voice vlan: voice vlan if any for ethernet access ports
@@ -92,7 +98,7 @@ Interfaces sheet:
 - Duplex: duplex of ethernet interfaces (full, half, auto, a-full, a-half). a-full and a-half are auto duplex with duplex detected.
 - Speed: speed of ethernet interfaces (10, 100, 1000, auto, a-10, a-100, a-1000, etc.). a-NNN are auto speed with speed detected.
 
-CDP neigbors sheet:
+CDP neighbors sheet:
 
 - Name: hostname of local device
 - Local interface: interface of local device
