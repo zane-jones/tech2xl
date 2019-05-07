@@ -67,6 +67,12 @@ intfields = ["Name", \
             "Hardware", \
             "Mac address", \
             "Encapsulation", \
+			"Input queue", \
+			"Output queue", \
+			"Input rate bps", \
+			"Input rate pps", \
+			"Output rate bps", \
+			"Output rate pps", \
             "Switchport mode", \
             "Access vlan", \
             "Voice vlan", \
@@ -218,7 +224,7 @@ for arg in sys.argv[2:]:
                     if m:
                         intinfo[name][item]["Voice vlan"] = m.group(1)
                         continue
-
+			
                     m = re.search(" frame-relay interface-dlci (\d+)", line)
                     if m:
                         intinfo[name][item]["DLCI"] = int(m.group(1))
@@ -400,7 +406,27 @@ for arg in sys.argv[2:]:
                     intinfo[name][item]['Media type'] = m.group(3)
                     continue
 
-
+                m = re.search("Input queue: ([^\s]+)", line)
+                if m:
+                    intinfo[name][item]['Input queue'] = m.group(1)
+                    continue
+					
+                m = re.search("Output queue: ([^\s]+)", line)
+                if m:
+                    intinfo[name][item]['Output queue'] = m.group(1)
+                    continue
+					
+                m = re.search("input rate ([^\s]+) bits\/sec, ([^\s]+)", line)
+                if m:
+                    intinfo[name][item]['Input rate bps'] = m.group(1)
+                    intinfo[name][item]['Input rate pps'] = m.group(2)
+                    continue
+					
+                m = re.search("output rate ([^\s]+) bits\/sec, ([^\s]+)", line)
+                if m:
+                    intinfo[name][item]['Output rate bps'] = m.group(1)
+                    intinfo[name][item]['Output rate pps'] = m.group(2)
+                    continue
 
             # processes "show interfaces status" command or section of sh tech
             if command == 'show interfaces status' and name != '':
