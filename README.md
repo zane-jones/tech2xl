@@ -41,6 +41,7 @@ Commands (and sections of a "show technical-support") supported
 - show cdp neighbors detail
 - show diag
 - show inventory
+- show mac address-table
 
 Excel file output format
 ------------------------
@@ -97,6 +98,13 @@ Interfaces sheet:
 - DLCI: for frame relay subinterfaces
 - Duplex: duplex of ethernet interfaces (full, half, auto, a-full, a-half). a-full and a-half are auto duplex with duplex detected.
 - Speed: speed of ethernet interfaces (10, 100, 1000, auto, a-10, a-100, a-1000, etc.). a-NNN are auto speed with speed detected.
+
+Mac Addresses sheet:
+
+- Name: hostname of local device
+- Vlan: vlan of local device
+- Type: MAC address type
+- Ports: mac address interface
 
 CDP neighbors sheet:
 
