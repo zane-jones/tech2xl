@@ -41,7 +41,7 @@ if len(sys.argv) < 3:
     sys.exit(2)
 
 commands = [["show"], \
-            ["version", "cdp", "technical-support", "running-config", "interfaces", "mac", "diag", "inventory"], \
+            ["version", "cdp", "technical-support", "running-config", "interfaces", "mac", "vlan", "diag", "inventory"], \
             ["neighbors", "status", "address-table"], \
             ["detail"]]
 
@@ -54,6 +54,7 @@ intinfo = collections.OrderedDict()
 cdpinfo = collections.OrderedDict()
 diaginfo = collections.OrderedDict()
 macinfo = collections.OrderedDict()
+vlaninfo = collections.OrderedDict()
 
 #These are the fields to be extracted
 systemfields = ["Name", "Model", "System ID", "Mother ID", "Image"]
@@ -99,6 +100,8 @@ cdpfields = ["Name", "Local interface", "Remote device name", "Remote device dom
 diagfields = ["Name", "Slot", "Subslot", "Description", "Serial number", "Part number"]
 
 macfields = ["Name", "Vlan", "Mac address", "Type", "Ports"]
+
+vlanfields = ["Name", "Vlan", "Vlan Name", "Status"]
 
 masks = ["128.0.0.0","192.0.0.0","224.0.0.0","240.0.0.0","248.0.0.0","252.0.0.0","254.0.0.0","255.0.0.0","255.128.0.0","255.192.0.0","255.224.0.0","255.240.0.0","255.248.0.0","255.252.0.0","255.254.0.0","255.255.0.0","255.255.128.0","255.255.192.0","255.255.224.0","255.255.240.0","255.255.248.0","255.255.252.0","255.255.254.0","255.255.255.0","255.255.255.128","255.255.255.192","255.255.255.224","255.255.255.240","255.255.255.248","255.255.255.252","255.255.255.254","255.255.255.255"]
 
@@ -155,6 +158,9 @@ for arg in sys.argv[2:]:
 					
                 if name not in macinfo.keys():
                     macinfo[name] = collections.OrderedDict()
+
+                if name not in vlaninfo.keys():
+                    vlaninfo[name] = collections.OrderedDict()
 					
                 continue
 
@@ -191,6 +197,9 @@ for arg in sys.argv[2:]:
                         
                         if name not in macinfo.keys():
                             macinfo[name] = collections.OrderedDict()
+
+                        if name not in vlaninfo.keys():
+                            vlaninfo[name] = collections.OrderedDict()
 
                     continue
 
@@ -486,6 +495,21 @@ for arg in sys.argv[2:]:
                             macinfo[name][item]['Type'] = m.group(3)
                             macinfo[name][item]['Ports'] = m.group(4)
 
+            # processes "show vlan" command or section of sh tech
+            if command == 'show vlan' and name != '':
+           
+                m = re.search("^([0-9]+)\s+([\S]+)\s+([\S]+)", line)
+                if m:
+                    item = m.group(1)
+					
+                    if item is not None:
+                        if item not in vlaninfo[name].keys():
+                            vlaninfo[name][item] = collections.OrderedDict(zip(vlanfields, [''] * len(vlanfields)))
+                            vlaninfo[name][item]['Name'] = name
+                            vlaninfo[name][item]['Vlan'] = m.group(1)
+                            vlaninfo[name][item]['Vlan Name'] = m.group(2)
+                            vlaninfo[name][item]['Status'] = m.group(3)
+
             # processes "show CDP neighbors" command or section of sh tech
             if command == 'show cdp neighbors' and name != '':
                 # extracts information as per patterns
@@ -774,6 +798,28 @@ if cont > 0:
                 for col in range(0,len(macfields)):
 
                     ws_mac.write(row, col, macinfo[name][item][macfields[col]])
+
+                row = row + 1
+
+    # Writes mvlan information
+    cont = 0
+    for name in vlaninfo.keys():
+        cont = cont + len(vlaninfo[name])
+    print(cont, " Vlans")
+
+    if cont > 0:
+        ws_vlan = wb.add_sheet('Vlans')
+
+        for i, value in enumerate(vlanfields):
+            ws_vlan.write(0, i, value, style_header)
+
+        row = 1
+        for name in vlaninfo.keys():
+            for item in vlaninfo[name].keys():
+
+                for col in range(0,len(vlanfields)):
+
+                    ws_vlan.write(row, col, vlaninfo[name][item][vlanfields[col]])
 
                 row = row + 1
 				
