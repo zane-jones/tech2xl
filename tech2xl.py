@@ -41,8 +41,8 @@ if len(sys.argv) < 3:
     sys.exit(2)
 
 commands = [["show"], \
-            ["version", "cdp", "technical-support", "running-config", "interfaces", "diag", "inventory"], \
-            ["neighbors", "status"], \
+            ["version", "cdp", "technical-support", "running-config", "interfaces", "mac", "diag", "inventory"], \
+            ["neighbors", "status", "address-table"], \
             ["detail"]]
 
 
@@ -53,6 +53,7 @@ systeminfo = collections.OrderedDict()
 intinfo = collections.OrderedDict()
 cdpinfo = collections.OrderedDict()
 diaginfo = collections.OrderedDict()
+macinfo = collections.OrderedDict()
 
 #These are the fields to be extracted
 systemfields = ["Name", "Model", "System ID", "Mother ID", "Image"]
@@ -96,6 +97,8 @@ intfields = ["Name", \
 cdpfields = ["Name", "Local interface", "Remote device name", "Remote device domain", "Remote interface", "Remote device IP"]
 
 diagfields = ["Name", "Slot", "Subslot", "Description", "Serial number", "Part number"]
+
+macfields = ["Name", "Vlan", "Mac address", "Type", "Ports"]
 
 masks = ["128.0.0.0","192.0.0.0","224.0.0.0","240.0.0.0","248.0.0.0","252.0.0.0","254.0.0.0","255.0.0.0","255.128.0.0","255.192.0.0","255.224.0.0","255.240.0.0","255.248.0.0","255.252.0.0","255.254.0.0","255.255.0.0","255.255.128.0","255.255.192.0","255.255.224.0","255.255.240.0","255.255.248.0","255.255.252.0","255.255.254.0","255.255.255.0","255.255.255.128","255.255.255.192","255.255.255.224","255.255.255.240","255.255.255.248","255.255.255.252","255.255.255.254","255.255.255.255"]
 
@@ -149,7 +152,10 @@ for arg in sys.argv[2:]:
 
                 if name not in cdpinfo.keys():
                     cdpinfo[name] = collections.OrderedDict()
-
+					
+                if name not in macinfo.keys():
+                    macinfo[name] = collections.OrderedDict()
+					
                 continue
 
             # detects section within show tech
@@ -182,6 +188,9 @@ for arg in sys.argv[2:]:
 
                         if name not in cdpinfo.keys():
                             cdpinfo[name] = collections.OrderedDict()
+                        
+                        if name not in macinfo.keys():
+                            macinfo[name] = collections.OrderedDict()
 
                     continue
 
@@ -459,8 +468,23 @@ for arg in sys.argv[2:]:
                         intinfo[name][item]['Duplex'] = m.group(4)
                         intinfo[name][item]['Speed'] = m.group(5)
                         intinfo[name][item]['Media type'] = m.group(6)
-
-                        
+            
+            
+            # processes "show mac address-table" command or section of sh tech
+            if command == 'show mac address-table' and name != '':
+           
+                m = re.search("^\s([A-Z0-9]+)\s+([\S]+)\s+([\S]+)\s+([\S]+)", line)
+                if m:
+                    item = m.group(2)
+					
+                    if item is not None:
+                        if item not in macinfo[name].keys():
+                            macinfo[name][item] = collections.OrderedDict(zip(macfields, [''] * len(macfields)))
+                            macinfo[name][item]['Name'] = name
+                            macinfo[name][item]['Vlan'] = m.group(1)
+                            macinfo[name][item]['Mac address'] = m.group(2)
+                            macinfo[name][item]['Type'] = m.group(3)
+                            macinfo[name][item]['Ports'] = m.group(4)
 
             # processes "show CDP neighbors" command or section of sh tech
             if command == 'show cdp neighbors' and name != '':
@@ -731,6 +755,28 @@ if cont > 0:
 
                 row = row + 1
 
+    # Writes mac address information
+    cont = 0
+    for name in macinfo.keys():
+        cont = cont + len(macinfo[name])
+    print(cont, " mac addresses")
+
+    if cont > 0:
+        ws_mac = wb.add_sheet('Mac Addresses')
+
+        for i, value in enumerate(macfields):
+            ws_mac.write(0, i, value, style_header)
+
+        row = 1
+        for name in macinfo.keys():
+            for item in macinfo[name].keys():
+
+                for col in range(0,len(macfields)):
+
+                    ws_mac.write(row, col, macinfo[name][item][macfields[col]])
+
+                row = row + 1
+				
     # Writes CDP information
     cont = 0
     for name in cdpinfo.keys():
