@@ -41,8 +41,8 @@ if len(sys.argv) < 3:
     sys.exit(2)
 
 commands = [["show"], \
-            ["version", "cdp", "technical-support", "running-config", "interfaces", "mac", "vlan", "arp", "diag", "inventory"], \
-            ["neighbors", "status", "address-table"], \
+            ["version", "cdp", "technical-support", "running-config", "interfaces", "mac", "vlan", "rep", "arp", "diag", "inventory"], \
+            ["neighbors", "status", "topology", "address-table"], \
             ["detail"]]
 
 
@@ -56,6 +56,7 @@ diaginfo = collections.OrderedDict()
 macinfo = collections.OrderedDict()
 vlaninfo = collections.OrderedDict()
 arpinfo = collections.OrderedDict()
+repinfo = collections.OrderedDict()
 
 #These are the fields to be extracted
 systemfields = ["Name", "Model", "System ID", "Mother ID", "Image"]
@@ -105,6 +106,8 @@ macfields = ["Name", "Vlan", "Mac address", "Type", "Ports"]
 vlanfields = ["Name", "Vlan", "Vlan Name", "Status"]
 
 arpfields = ["Name", "IP Address", "Age (min)", "Mac Address", "Type", "Interface"]
+
+repfields = ["Name", "Segment"]
 
 masks = ["128.0.0.0","192.0.0.0","224.0.0.0","240.0.0.0","248.0.0.0","252.0.0.0","254.0.0.0","255.0.0.0","255.128.0.0","255.192.0.0","255.224.0.0","255.240.0.0","255.248.0.0","255.252.0.0","255.254.0.0","255.255.0.0","255.255.128.0","255.255.192.0","255.255.224.0","255.255.240.0","255.255.248.0","255.255.252.0","255.255.254.0","255.255.255.0","255.255.255.128","255.255.255.192","255.255.255.224","255.255.255.240","255.255.255.248","255.255.255.252","255.255.255.254","255.255.255.255"]
 
@@ -168,6 +171,9 @@ for arg in sys.argv[2:]:
                 if name not in arpinfo.keys():
                     arpinfo[name] = collections.OrderedDict()
 					
+                if name not in repinfo.keys():
+                    repinfo[name] = collections.OrderedDict()
+					
                 continue
 
             # detects section within show tech
@@ -217,6 +223,9 @@ for arg in sys.argv[2:]:
 
                         if name not in arpinfo.keys():
                             arpinfo[name] = collections.OrderedDict()
+                        
+                        if name not in repinfo.keys():
+                            repinfo[name] = collections.OrderedDict()
 
                     continue
 
@@ -526,6 +535,19 @@ for arg in sys.argv[2:]:
                             vlaninfo[name][item]['Vlan'] = m.group(1)
                             vlaninfo[name][item]['Vlan Name'] = m.group(2)
                             vlaninfo[name][item]['Status'] = m.group(3)
+            
+			# processes "show rep topology detail" command or section of sh tech
+            if command == 'show rep topology detail' and name != '':
+           
+                m = re.search("^REP\s\S+\s([0-9]+)", line)
+                if m:
+                    item = m.group(1)
+					
+                    if item is not None:
+                        if item not in repinfo[name].keys():
+                            repinfo[name][item] = collections.OrderedDict(zip(repfields, [''] * len(repfields)))
+                            repinfo[name][item]['Name'] = name
+                            repinfo[name][item]['Segment'] = m.group(1)
 
             # processes "show arp" command or section of sh tech
             if command == 'show arp' and name != '':
@@ -854,6 +876,28 @@ if cont > 0:
                 for col in range(0,len(vlanfields)):
 
                     ws_vlan.write(row, col, vlaninfo[name][item][vlanfields[col]])
+
+                row = row + 1
+
+    # Writes rep information
+    cont = 0
+    for name in repinfo.keys():
+        cont = cont + len(repinfo[name])
+    print(cont, " REP Segments")
+
+    if cont > 0:
+        ws_rep = wb.add_sheet('REP')
+
+        for i, value in enumerate(repfields):
+            ws_rep.write(0, i, value, style_header)
+
+        row = 1
+        for name in repinfo.keys():
+            for item in repinfo[name].keys():
+
+                for col in range(0,len(repfields)):
+
+                    ws_rep.write(row, col, repinfo[name][item][repfields[col]])
 
                 row = row + 1
 
