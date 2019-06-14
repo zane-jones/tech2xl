@@ -508,7 +508,7 @@ for arg in sys.argv[2:]:
             # processes "show mac address-table" command or section of sh tech
             if command == 'show mac address-table' and name != '':
            
-                m = re.search("^\s([A-Z0-9]+)\s+([\S]+)\s+([\S]+)\s+([\S]+)", line)
+                m = re.search("\s([\S]+)\s+([\S]+)\s+([\S]+)\s+([\S]+)", line)
                 if m:
                     item = m.group(2)
 					
